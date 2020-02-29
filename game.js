@@ -107,27 +107,34 @@ function create() {
         // pursue any remaining bread
         this.etat = 0;
     }, this); */
-    
 
+    //this.ch.play('eat', true);
 
+    this.from = this.add.sprite(200, 200, 'fromage').setDepth(4);
+
+    // ease: 'Sine.easeInOut',
+    this.hop = function (tx, ty) {
+        let t = this.tweens.add({
+            targets: this.ch,
+            props: {
+                x: { value: tx, ease: 'Power1' },
+                y: { value: ty, ease: 'Power3' }
+            },
+            duration: 200,
+            repeat: 0,
+            paused: true
+        });
+        t.play();
+    }
 
     /**
-     * User clicks on sidewalk, bread appears, pigeon walks over and eats it
+     * 
      */
 
     // listen for finger or mouse press on the sidewalk (y between 232 and 1196)
     this.bg.on('pointerdown', function (pointer, localX, localY) {
-        //this.ch.play('eat', true);
-        this.hop = this.tweens.add({
-            targets: this.ch,
-            x: pointer.downX,
-            y: pointer.downY,
-            duration: 200,
-            repeat: 0,
-            ease: 'Sine.easeInOut',
-            paused: true
-        });    
-        this.hop.play();
+        this.from.setPosition(pointer.x, pointer.y);
+        this.hop(pointer.x, pointer.y);
     }, this);
 
 }
