@@ -38,6 +38,12 @@ function init() {
     this.gameW = this.sys.game.config.width;
     this.gameH = this.sys.game.config.height;
 
+    // landing spots, x, y, direction
+    this.rebA = [
+        { rx: 520, ry: 665, rs: 1 },
+        { rx: 700, ry: 670, rs: -1 }
+    ];
+
     // move the y value of pigeon near visual center
     this.pH = function pH(ay) {
         //return ay;
@@ -60,82 +66,49 @@ function create() {
     //let text = "Appuyez sur le rebord pour nourrir l'oiseau";
     //this.instr = this.add.text(150, 260, text).setDepth(2).setFont('36px Arial').setAlign('center').setColor('#000000');
 
-    // chick - origin is bottom center bc of animations, displayHeight = 232
+    // add a chick in one of two spots
+    let ind = Math.random() > 0.5 ? 1 : 0;
+    // chick - origin is bottom center bc of animations
     // depth of 5
-    let dH = 269;
-    this.c = this.add.sprite(500, (this.gameH - dH + 150), 'chick').setDepth(5).setOrigin(0.5, 1);
-    this.c.setScale(0.65);
-    console.log(this.c);
-    return;
+    this.ch = this.add.sprite(this.rebA[ind].rx, this.rebA[ind].ry, 'chick').setDepth(5).setOrigin(1, 1);
+    // for now he's exported at 2x from Illustrator
+    let scale = 0.65;
+    this.ch.setScale(scale);
+    // facing right or left
+    this.ch.scaleX = this.rebA[ind].rs * scale;
+
     // shadow underneath
-    this.om = this.add.sprite(585, ((this.gameH / 2) + (232 / 2) - 5), 'ombre').setDepth(2);
-    this.om.setScale(1.2);
-    //console.log(this.p);
+    this.om = this.add.sprite(this.ch.x, this.ch.y, 'ombre').setDepth(2).setOrigin(1, 1);
+    this.om.setScale(1.5);
 
     // audio - must be here in Scene create()
-    this.jackS = this.sound.add('jack');
-    this.gp1S = this.sound.add('gp1');
+    this.peck = this.sound.add('peck');
 
-    // walking
+    // eating
     this.anims.create({
-        key: 'walk',
-        frames: this.anims.generateFrameNames('pigeon', {
-            prefix: 'body_',
+        key: 'eat',
+        frames: this.anims.generateFrameNames('chick', {
+            prefix: 'chick',
             start: 0,
-            end: 16,
+            end: 6,
             zeroPad: 1
         }),
         repeat: 0
     }, this);
-
-    // eatForwards
-    this.anims.create({
-        key: 'eatF',
-        frames: this.anims.generateFrameNames('pigeon', {
-            prefix: 'body_',
-            start: 16,
-            end: 28,
-            zeroPad: 1
-        }),
-        repeat: 0,
-    }, this);
     // eating sound during animation
-    this.p.on('animationupdate-eatF', function () {
-        this.jackS.play();
+    this.ch.on('animationupdate-eat', function () {
+        this.peck.play();
     }, this);
 
     // done eating
-    this.p.on('animationcomplete-eatF', function () {
+    /* this.p.on('animationcomplete-eatF', function () {
         // remove bread from stage
         this.nextB.x = -500;
         // pursue any remaining bread
         this.etat = 0;
-    }, this);
+    }, this); */
+    
 
-    // eatBackwards
-    this.anims.create({
-        key: 'eatB',
-        frames: this.anims.generateFrameNames('pigeon', {
-            prefix: 'body_',
-            start: 29,
-            end: 40,
-            zeroPad: 1
-        }),
-        repeat: 0,
-    });
-    // eating sound during animation
-    this.p.on('animationupdate-eatB', function () {
-        this.jackS.play();
-    }, this);
-
-    // done eating
-    this.p.on('animationcomplete-eatB', function () {
-        // remove bread from stage
-        this.nextB.x = -500;
-        // pursue any remaining bread
-        this.etat = 0;
-    }, this);
-    //
 
 
     /**
@@ -144,29 +117,17 @@ function create() {
 
     // listen for finger or mouse press on the sidewalk (y between 232 and 1196)
     this.bg.on('pointerdown', function (pointer, localX, localY) {
-
-        // remove instructions
-        this.instr.x = 1300;
-
-        // must be on the sidewalk
-        if (pointer.downY < 232) return;
-
-        // put bread on ground - display W=52, H=71, depth always covered by pigeon
-        let br = this.add.sprite(pointer.downX, pointer.downY, 'pain').setDepth(3);
-
-        // state of bread
-        br.eaten = false;
-
-        // store bread coordinates - center
-        br.bx = pointer.downX;
-        br.by = pointer.downY;
-
-        // store all breads
-        this.painA.push(br);
-
-        // any new bread means reconsider pursuit of bread
-        this.etat = 0;
-
+        //this.ch.play('eat', true);
+        this.hop = this.tweens.add({
+            targets: this.ch,
+            x: pointer.downX,
+            y: pointer.downY,
+            duration: 200,
+            repeat: 0,
+            ease: 'Sine.easeInOut',
+            paused: true
+        });    
+        this.hop.play();
     }, this);
 
 }
