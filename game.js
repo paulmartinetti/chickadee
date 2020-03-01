@@ -23,7 +23,7 @@ function preload() {
     this.load.image('bg', 'assets/images/rebord-c.jpg');
 
     // pigeon
-    this.load.atlas('chick', 'assets/images/spritesheet.png', 'assets/images/sprites.json');
+    this.load.atlas('chickAtlas', 'assets/images/spritesheet.png', 'assets/images/sprites.json');
     this.load.image('ombre', 'assets/images/ombre.png');
 
     // bread
@@ -74,9 +74,9 @@ function init() {
      * 7 - look left
      * 8 - look right
      */
-    this.mvmt1 = [{ f: 0, t: 3 }, { f: 7, t: 1 }, { f: 8, t: 1 }, { f: 0, t: 3 }];
-    this.ind = 0;
-    this.len = this.mvmt1.length;
+    this.mvmt1A = [{ f: 0, t: 3 }, { f: 7, t: 1 }, { f: 8, t: 1 }, { f: 0, t: 3 }];
+    this.mInd = 0;
+    this.mLen = this.mvmt1A.length;
 
 }
 
@@ -94,7 +94,13 @@ function create() {
     // chick - origin is bottom center bc of animations
 
     // depth of 5
-    this.chick = this.add.sprite(this.rebordA[ind].rx, this.rebordA[ind].ry, 'chick').setDepth(5).setOrigin(1, 1);
+    // new approach
+    console.log(this.textures.get('chickAtlas').frames);
+
+    //
+    this.chick = this.add.sprite(this.rebordA[ind].rx, this.rebordA[ind].ry, 'chickAtlas').setDepth(5).setOrigin(1, 1);
+    this.chick.setTexture('chickAtlas', 'chick8');
+    return;
     // store and update x, y data before moving
     this.chick.cx = this.rebordA[ind].rx;
     this.chick.cy = this.rebordA[ind].ry;
@@ -112,14 +118,17 @@ function create() {
     // eating
     this.anims.create({
         key: 'eat',
-        frames: this.anims.generateFrameNames('chick', {
+        frames: this.anims.generateFrameNames('chickAtlas', {
             prefix: 'chick',
             start: 0,
-            end: 6,
-            zeroPad: 1
+            end: 7,
+            zeroPad: 1,
         }),
         repeat: 0
     }, this);
+    this.chick.play('eat', true);
+    
+    return;
     // eating sound during animation
     this.chick.on('animationupdate-eat', function () {
         this.peck.play();
@@ -148,87 +157,97 @@ function create() {
 
 // about 100 times per second
 function update() {
-
-    // pause
-    if (this.etat == 0) {
-        // capture cur movement
-        let move = this.mvmt1[this.ind];
-        
-        // during mvmt
-
-        if (this.inst > move.t * this.insLen) {
-            // reset, move on
-            this.inst = 0
-            
-        }
-
-        // if this.ind < len .. 
-
-        // set
-        this.chick.setFrame("chick"+move.f);
-        // next
-        this.inst++;
-
-
-    }
-
-    // hop closer to cheese
-    if (this.etat == 1) {
-        // move X
-        if (this.cheese.cx < this.chick.x) {
-            // look left
-            this.chick.scaleX = -1 * this.conf.chScale;
-            // move left
-            this.moveX = -1 * this.conf.hop;
-            // adjust if arrived
-            let calcX = this.chick.x += this.moveX;
-            if (calcX < this.cheese.cx) this.moveX = 0;
-        } else {
-            // look right
-            this.chick.scaleX = this.conf.chScale;
-            // move right
-            this.moveX = this.conf.hop;
-            // adjust if arrived
-            let calcX = this.chick.x += this.moveX;
-            if (calcX > this.cheese.cx) this.moveX = 0;
-        }
-        // move y
-        if (this.cheese.cy > this.chick.y) {
-            // move down
-            this.moveY = this.conf.hop;
-        } else {
-            this.moveY = 0;
-        }
-
-        // arrived
-        if (this.moveX == 0 && this.moveY == 0) {
-            this.etat = 3;
-            return;
-        }
-
-        // move
-        this.chick.x += this.moveX;
-        this.chick.y += this.moveY;
-
-        // pause
-        this.etat = 0;
-    }
-
-    // peck
-    if (this.etat == 3) {
-        this.chick.play('eat', true);
-    }
-
-
     /**
-     * pigeon etat
-     * 0 = not moving, not eating, calculating closest bread
-     * 1 = bread available, moving toward closest bread
-     * 2 = eating
+     * this.mvmt1A = [{ f: 0, t: 3 }, { f: 7, t: 1 }, { f: 8, t: 1 }, { f: 0, t: 3 }];
+        this.mInd = 0;
+        this.mLen = this.mvmt1.length;
      */
+    // natural movements, not pursing food
+    if (this.etat == 0) {
+
+        // if still movements left to do
+        if (this.mInd < this.mLen) {
+
+            // capture cur movement
+            let move = this.mvmt1A[this.mInd];
+            // set
+            //console.log(this.chick.anims);
+            // check time of movement
+            if (this.inst < move.t * this.insLen) {
+                this.inst++;
+
+            } else {
+                // reset, move on
+                this.mInd++;
+                this.inst = 0;
+            }
+            // done w movements
+        } else {
+            // reset mvmt
+            this.mInd = 0;
+            // move on to eat
+            this.etat=1;
+        }
+    }
+
+        // hop closer to cheese
+        if (this.etat == 1) {
+            return;
+            // move X
+            if (this.cheese.cx < this.chick.x) {
+                // look left
+                this.chick.scaleX = -1 * this.conf.chScale;
+                // move left
+                this.moveX = -1 * this.conf.hop;
+                // adjust if arrived
+                let calcX = this.chick.x += this.moveX;
+                if (calcX < this.cheese.cx) this.moveX = 0;
+            } else {
+                // look right
+                this.chick.scaleX = this.conf.chScale;
+                // move right
+                this.moveX = this.conf.hop;
+                // adjust if arrived
+                let calcX = this.chick.x += this.moveX;
+                if (calcX > this.cheese.cx) this.moveX = 0;
+            }
+            // move y
+            if (this.cheese.cy > this.chick.y) {
+                // move down
+                this.moveY = this.conf.hop;
+            } else {
+                this.moveY = 0;
+            }
+
+            // arrived
+            if (this.moveX == 0 && this.moveY == 0) {
+                this.etat = 3;
+                return;
+            }
+
+            // move
+            this.chick.x += this.moveX;
+            this.chick.y += this.moveY;
+
+            // pause
+            this.etat = 0;
+        }
+
+        // peck
+        if (this.etat == 3) {
+            this.chick.play('eat', true);
+        }
+
+
+        /**
+         * pigeon etat
+         * 0 = not moving, not eating, calculating closest bread
+         * 1 = bread available, moving toward closest bread
+         * 2 = eating
+         */
 
 
 
-}
+    }
 
 
