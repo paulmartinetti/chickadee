@@ -39,7 +39,7 @@ function init() {
     this.gameH = this.sys.game.config.height;
 
     // landing spots, x, y, starting direction
-    this.rebA = [
+    this.rebordA = [
         { rx: 520, ry: 665, rs: 1 },
         { rx: 700, ry: 670, rs: -1 }
     ];
@@ -52,19 +52,31 @@ function init() {
 
     // conf - initial vars
     this.conf = {
-        pauseLen: 50,
+        insLen: 10,
         hop: 100,
-        chScale: 0.65
     };
     // chick pauses before moving - etat = 0
     this.etat = 0;
     // tracking pause time
-    this.pause = 0;
-    // total distance to increment, starting with one hop
-    this.dist = this.conf.hop;
+    this.inst = 0;
     // direction
     this.moveX = 0;
     this.moveY = 0;
+    // random function
+    this.rnd = function () { return Math.random() }
+    /**
+     * Head movement data pairs
+     * {atlas frame, multiples of insLen}
+     * pref 'chick'
+     * 0, 6 - stand
+     * 1, 5 - bend
+     * 3 - peck
+     * 7 - look left
+     * 8 - look right
+     */
+    this.mvmt1 = [{ f: 0, t: 3 }, { f: 7, t: 1 }, { f: 8, t: 1 }, { f: 0, t: 3 }];
+    this.ind = 0;
+    this.len = this.mvmt1.length;
 
 }
 
@@ -78,14 +90,17 @@ function create() {
     //this.instr = this.add.text(150, 260, text).setDepth(2).setFont('36px Arial').setAlign('center').setColor('#000000');
 
     // add a chick in one of two spots
-    let ind = Math.random() > 0.5 ? 1 : 0;
+    let ind = this.rnd > 0.5 ? 1 : 0;
     // chick - origin is bottom center bc of animations
+
     // depth of 5
-    this.chick = this.add.sprite(this.rebA[ind].rx, this.rebA[ind].ry, 'chick').setDepth(5).setOrigin(1, 1);
-    // for now he's exported at 2x from Illustrator
-    this.chick.setScale(this.conf.chScale);
+    this.chick = this.add.sprite(this.rebordA[ind].rx, this.rebordA[ind].ry, 'chick').setDepth(5).setOrigin(1, 1);
+    // store and update x, y data before moving
+    this.chick.cx = this.rebordA[ind].rx;
+    this.chick.cy = this.rebordA[ind].ry;
+
     // facing right or left
-    this.chick.scaleX = this.rebA[ind].rs * this.conf.chScale;
+    this.chick.scaleX = this.rebordA[ind].rs;
 
     // shadow underneath
     //this.om = this.add.sprite(this.chick.x, this.chick.y, 'ombre').setDepth(2).setOrigin(1, 1);
@@ -136,15 +151,25 @@ function update() {
 
     // pause
     if (this.etat == 0) {
-        // wait
-        this.pause++;
-        if (this.pause > this.conf.pauseLen) {
+        // capture cur movement
+        let move = this.mvmt1[this.ind];
+        
+        // during mvmt
+
+        if (this.inst > move.t * this.insLen) {
             // reset, move on
-            this.pause = 0;
-            this.etat = 1;
-        } else {
-            return;
+            this.inst = 0
+            
         }
+
+        // if this.ind < len .. 
+
+        // set
+        this.chick.setFrame("chick"+move.f);
+        // next
+        this.inst++;
+
+
     }
 
     // hop closer to cheese
