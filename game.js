@@ -62,9 +62,11 @@ function init() {
     // conf - initial vars
     this.conf = {
         insLen: 20,
-        hop: 100,
+        hop: 10,
     };
-
+    // trying a 2-part hop with less X on the first half
+    this.h2 = false;
+    // how long to pause, which etat est le prochain
     this.pausNxt = function (t, e) {
         // var dedie du temps
         this.inst++;
@@ -161,7 +163,7 @@ function create() {
 
 // about 100 times per second
 function update() {
-
+    //console.log(this.etat);
     /**
      * game etat
      * 0 - waiting for cheese
@@ -187,6 +189,7 @@ function update() {
 
     // bring in chick, rnd location sur le rebord - once
     if (this.etat == 2) {
+
         // add a chick in one of two spots
         let ind = this.rnd() > 0.5 ? 1 : 0;
 
@@ -203,14 +206,14 @@ function update() {
         this.om.setScale(3);
 
         // eating sound during animation
-        this.chick.on('animationupdate-eat', function () {
+        /* this.chick.on('animationupdate-eat', function () {
             this.peck.play();
         }, this);
 
         // done eating
         this.chick.on('animationcomplete-eat', function () {
             this.etat = 4;
-        }, this);
+        }, this); */
 
         // ready to gest
         this.etat = 3;
@@ -272,62 +275,73 @@ function update() {
         if (yena) this.etat = 5;
     }
 
-    // hop closer to cheese
+    // calculate one hop closer to cheese
     if (this.etat == 5) {
-        
- // move X - going left
- if (this.chick.dx < 0) {
-    // not more than a hop
-    if (this.chick.dx > this.conf.hop){
-        // ** update dx !!!
-        this.moveX = -1 * this.conf.hop;
-    } else {
-        this.moveX = -1 * this.chick.dx;
+        // move X - going left
+        if (this.chick.dx < 0) {
+            // look left
+            this.chick.scaleX = -1;
+            // distance more than a hop 
+            if (Math.abs(this.chick.dx) > this.conf.hop) {
+                // how much to move
+                this.moveX = -1 * this.conf.hop;
+            } else {
+                this.moveX = -1 * this.chick.dx;
+            }
+            // adjust if arrived
+            if (this.chick.cx < this.nextChz.cx) this.moveX = 0;
+        } else {
+            // move right
+            if (this.chick.dx > this.conf.hop) {
+                // how much to move
+                this.moveX = this.conf.hop;
+            } else {
+                this.moveX = this.chick.dx;
+            }
+            // adjust if arrived
+            if (this.chick.cx > this.nextChz.cx) this.moveX = 0;
+        }
+        // move Y - going up (rare)
+        if (this.chick.dy < 0) {
+            // distance more than a hop 
+            if (Math.abs(this.chick.dy) > this.conf.hop) {
+                // how much to move
+                this.moveY = -1 * this.conf.hop;
+            } else {
+                this.moveY = -1 * this.chick.dy;
+            }
+            // adjust if arrived
+            if (this.chick.cy < this.nextChz.cy) this.moveY = 0;
+        } else {
+            // move right
+            if (this.chick.dy > this.conf.hop) {
+                // how much to move
+                this.moveY = this.conf.hop;
+            } else {
+                this.moveY = this.chick.dy;
+            }
+            // adjust if arrived
+            if (this.chick.cy > this.nextChz.cy) this.moveY = 0;
+        }
+        // move to 6 to slow animation, do hop
+        // update
+        this.chick.cx += this.moveX;
+        this.chick.x = this.chick.cx;
+
+        this.chick.cy += this.moveY;
+        this.chick.y = this.chick.cy;
+        // shadow
+        // this.om.x += this.moveX;
+        //this.om.y += this.moveY;
+        if (this.moveY == 0 && this.moveX == 0) this.etat = 6;
     }
-    // adjust if arrived
-    if (this.p.x < this.nextB.bx) this.moveX = 0;
-} else {
-    // look right
-    this.p.scaleX = -1;
-    // move right
-    this.moveX = this.step;
-    // adjust if arrived
-    if (this.p.x > this.nextB.bx) this.moveX = 0;
-}
-// move y
-if (this.closestB.dy < 0) {
-    this.moveY = -1 * this.step;
-    // adjust if arrived
-    if (this.pH(this.p.y) < this.nextB.by) this.moveY = 0;
-} else {
-    this.moveY = this.step;
-    // adjust if arrived
-    if (this.pH(this.p.y) > this.nextB.by) this.moveY = 0;
-}
-
-// always move after belly
-if (this.p.anims.getProgress() * 10 > 6) {
-    this.gp1S.play();
-    this.p.x += this.moveX;
-    this.p.y += this.moveY;
-    // shadow
-    this.om.x += this.moveX;
-    this.om.y += this.moveY;
-}
-
-        
-    }
-
     // peck
     if (this.etat == 6) {
         this.chick.play('eat', true);
+        this.etat = 7;
     }
-
-
-
-
-
-
 }
+
+
 
 
