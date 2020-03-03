@@ -112,7 +112,8 @@ function create() {
 
     /**
      * 
-     * chick - created, no seen; origin is bottom right bc of animations, depth of 5
+     * chick - created, no seen; origin is bottom center, depth of 5
+     * remade sprite P
      * 
      */
     this.chick = this.add.sprite(-100, -100, 'chickAtlas').setDepth(5).setOrigin(1, 1);
