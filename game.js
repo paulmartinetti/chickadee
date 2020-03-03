@@ -49,8 +49,7 @@ function init() {
 
     // waiting for cheese
     this.etat = 0;
-    // tracking pause time
-    this.inst = 0;
+
     // random function
     this.rnd = function () { return Math.random() }
 
@@ -62,10 +61,14 @@ function init() {
     // conf - initial vars
     this.conf = {
         insLen: 20,
-        hop: 10,
+        hop: 100,
     };
+
     // trying a 2-part hop with less X on the first half
     this.h2 = false;
+
+    // tracking pause times
+    this.inst = 0;
     // how long to pause, which etat est le prochain
     this.pausNxt = function (t, e) {
         // var dedie du temps
@@ -95,7 +98,7 @@ function init() {
     this.moveX = 0;
     this.moveY = 0;
 
-    // cheese
+    // cheeses
     this.chzA = [];
     this.nextChz;
 }
@@ -170,7 +173,11 @@ function update() {
      * 0 - waiting for cheese
      * 1 - waiting for chick ~ 2 secs
      * 2 - chick lands
-     * 3 - 
+     * 3 - gests
+     * 4 - confirm available cheese, choose one, calc distance
+     * 5 - calc moveX, Y for one hop
+     * 6 - hop closer to cheese
+     * 
      */
 
     // wait for cheese
@@ -203,8 +210,8 @@ function update() {
         this.chick.scaleX = this.rebordA[ind].rs;
 
         // shadow underneath (half the display width of bird)
-        this.om = this.add.sprite(this.chick.cx - (this.chick.displayWidth / 2), this.chick.cy, 'ombre').setDepth(2);
-        this.om.setScale(3);
+        //this.om = this.add.sprite(this.chick.cx - (this.chick.displayWidth / 2), this.chick.cy, 'ombre').setDepth(2);
+        //this.om.setScale(3);
 
         // eating sound during animation
         /* this.chick.on('animationupdate-eat', function () {
@@ -287,7 +294,7 @@ function update() {
                 // how much to move
                 this.moveX = -1 * this.conf.hop;
             } else {
-                this.moveX = -1 * this.chick.dx;
+                this.moveX = -1 * Math.abs(this.chick.dx);
             }
             // adjust if arrived
             if (this.chick.cx < this.nextChz.cx) this.moveX = 0;
@@ -324,22 +331,45 @@ function update() {
             // adjust if arrived
             if (this.chick.cy > this.nextChz.cy) this.moveY = 0;
         }
-        // move to 6 to slow animation, do hop
+        // calc until arrived
+        if (Math.abs(this.moveY) > 0 || Math.abs(this.moveX) > 0) {
+            this.etat = 6;
+        } else {
+            this.etat = 8;
+        }
+
+    }
+    if (this.etat == 6) {
+        // slow animation, do two-move hop, then pause, then eat
+        let xhalf;
+        // separate first and 2nd hop
+        if (!this.h2) {
+            xhalf = 0.25;
+            this.h2 = true;
+        } else {
+            xhalf = 0.75;
+            this.h2 = false;
+        }
         // update
-        this.chick.cx += this.moveX;
+        this.chick.cx += (this.moveX * xhalf);
         this.chick.x = this.chick.cx;
 
-        this.chick.cy += this.moveY;
+        this.chick.cy += (this.moveY * 0.5);
         this.chick.y = this.chick.cy;
         // shadow
         // this.om.x += this.moveX;
-        //this.om.y += this.moveY;
-        if (this.moveY == 0 && this.moveX == 0) this.etat = 6;
+        //this.om.y += this.moveY; 
+        if (!this.h2) this.etat = 7;       
+    }
+     // pause before moving again, back to etat = 5
+    if (this.etat == 7) {
+        // 150 loops, to etat 5
+        this.pausNxt(100, 5);
     }
     // peck
-    if (this.etat == 6) {
+    if (this.etat == 8) {
         this.chick.play('eat', true);
-        this.etat = 7;
+        this.etat = 9;
     }
 }
 
