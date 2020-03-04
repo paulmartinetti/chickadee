@@ -359,6 +359,7 @@ function update() {
             // adjust if arrived
             if (this.chick.cy > this.nextChz.cy) this.moveY = 0;
         }
+        
         // calc until arrived
         if (Math.abs(this.moveY) > 0 || Math.abs(this.moveX) > 0) {
             this.etat = 6;
@@ -370,12 +371,12 @@ function update() {
     if (this.etat == 6) {
         // slow animation, do two-move hop, then pause, then eat
         let xhalf;
-        // separate first and 2nd hop
+        // separate first and 2nd hop (note 70 / 30 does not work)
         if (!this.h2) {
-            xhalf = 0.25;
+            xhalf = 0.75;
             this.h2 = true;
         } else {
-            xhalf = 0.75;
+            xhalf = 0.25;
             this.h2 = false;
         }
         // update
