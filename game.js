@@ -24,6 +24,7 @@ function preload() {
 
     // chick
     this.load.atlas('chickAtlas', 'assets/images/spritesheet.png', 'assets/images/sprites.json');
+    this.load.atlas('chickfly', 'assets/images/chickfly.png', 'assets/images/chickfly.json');
     this.load.image('ombre', 'assets/images/ombre.png');
     //console.log(this.textures.get('chickAtlas').frames);
 
@@ -61,7 +62,7 @@ function init() {
     // conf - initial vars
     this.conf = {
         insLen: 20,
-        hop: 100,
+        hop: 180,
     };
 
     // trying a 2-part hop with less X on the first half
@@ -142,6 +143,18 @@ function create() {
     }, this);
     //this.chick.play('eat', true);
 
+    // flying
+    this.anims.create({
+        key: 'fly',
+        frames: this.anims.generateFrameNames('chickfly', {
+            prefix: 'fly',
+            start: 0,
+            end: 1,
+            zeroPad: 1,
+        }),
+        repeat: 25
+    }, this);
+
     /**
      *  cheese
      */
@@ -162,7 +175,6 @@ function create() {
         }
 
     }, this);
-
 }
 
 // about 100 times per second
@@ -204,7 +216,7 @@ function update() {
         // chick Sprite defined in Create()
         // store and update x, y data before moving
         this.chick.cx = this.chick.x = this.rebordA[ind].rx;
-        this.chick.cy = this.chick.y = this.rebordA[ind].ry;
+        this.chick.cy = this.rebordA[ind].ry;
 
         // facing right or left
         this.chick.scaleX = this.rebordA[ind].rs;
@@ -224,7 +236,18 @@ function update() {
         }, this); */
 
         // ready to gest
-        this.etat = 3;
+        this.etat = 2.5;
+    }
+
+    // fly in
+    if (this.etat == 2.5) {
+        // 150 loops, to etat 2
+        if (this.chick.y < this.chick.cy) {
+            this.chick.play("fly", true);
+            this.chick.y += 20;
+        } else {
+            this.etat = 3;
+        }
     }
 
     // natural gestes, not pursing food
@@ -234,6 +257,9 @@ function update() {
      * this.mLen = this.mvmt1.length;
      */
     if (this.etat == 3) {
+
+        // stop flying
+        this.psn(0);
 
         // if still movements left to do
         if (this.mInd < this.mLen) {
@@ -300,6 +326,8 @@ function update() {
             if (this.chick.cx < this.nextChz.cx) this.moveX = 0;
         } else {
             // move right
+            // look right
+            this.chick.scaleX = 1;
             if (this.chick.dx > this.conf.hop) {
                 // how much to move
                 this.moveX = this.conf.hop;
@@ -351,10 +379,15 @@ function update() {
             this.h2 = false;
         }
         // update
+        // data x, y
         this.chick.cx += (this.moveX * xhalf);
+        // distance from cheese
+        this.chick.dx -= Math.abs(this.moveX * xhalf);
+        // actual chick
         this.chick.x = this.chick.cx;
 
         this.chick.cy += (this.moveY * 0.5);
+        this.chick.dy -= Math.abs(this.moveY * 0.5);
         this.chick.y = this.chick.cy;
         // shadow
         // this.om.x += this.moveX;
@@ -364,7 +397,7 @@ function update() {
      // pause before moving again, back to etat = 5
     if (this.etat == 7) {
         // 150 loops, to etat 5
-        this.pausNxt(100, 5);
+        this.pausNxt(70, 5);
     }
     // peck
     if (this.etat == 8) {
