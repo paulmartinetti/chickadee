@@ -128,28 +128,26 @@ function create() {
     }
 
     // audio - must be here in Scene create()
-    this.peck = this.sound.add('peck');
+    //this.peck = this.sound.add('peck');
 
-    // eating
+    // eating - removed 2 frames 
     this.anims.create({
         key: 'eat',
         frames: this.anims.generateFrameNames('chickAtlas', {
             prefix: 'chick',
-            start: 0,
-            end: 6,
+            frames: [0, 1, 3, 5, 6],
             zeroPad: 1,
         }),
         repeat: 0
     }, this);
     //this.chick.play('eat', true);
 
-    // flying
+    // flying in - do we need this? *****
     this.anims.create({
         key: 'fly',
         frames: this.anims.generateFrameNames('chickfly', {
             prefix: 'fly',
-            start: 0,
-            end: 1,
+            frames: [0, 1],
             zeroPad: 1,
         }),
         repeat: 25
@@ -375,6 +373,8 @@ function update() {
         if (!this.h2) {
             xhalf = 0.75;
             this.h2 = true;
+            // dip head forward when hopping
+            this.psn(1);
         } else {
             xhalf = 0.25;
             this.h2 = false;
@@ -397,6 +397,8 @@ function update() {
     }
      // pause before moving again, back to etat = 5
     if (this.etat == 7) {
+        // stand back up
+        this.psn(0);
         // 150 loops, to etat 5
         this.pausNxt(70, 5);
     }
