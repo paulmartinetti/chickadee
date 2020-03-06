@@ -53,7 +53,6 @@ var conf = {
 // trying a 2-part hop with less X on the first half
 var h2 = false;
 
-
 /**
  * Head movement data pairs
  * {atlas frame, multiples of insLen}
@@ -71,6 +70,8 @@ var mLen = mvmt1A.length;
 // direction
 var moveX = 0;
 var moveY = 0;
+// wings
+var wings = 0;
 
 // cheeses
 var chzA = [];
@@ -107,7 +108,7 @@ function create() {
     */
 
     // background photo
-    this.bg = this.add.sprite(0, 0, 'bg').setDepth(1).setOrigin(0, 0).setInteractive();
+    this.bg = this.add.image(0, 0, 'bg').setDepth(1).setOrigin(0, 0).setInteractive();
 
     // instructions
     //let text = "Appuyez sur le rebord pour nourrir l'oiseau";
@@ -126,6 +127,9 @@ function create() {
     this.psn = function (n) {
         this.chick.setTexture('chickAtlas', 'chick' + n);
     }
+    this.fly = function (n) {
+        this.chick.setTexture('chickfly', 'fly' + n);
+    }
 
     // audio - must be here in Scene create()
     //this.peck = this.sound.add('peck');
@@ -142,17 +146,6 @@ function create() {
     }, this);
     //this.chick.play('eat', true);
 
-    // flying in - do we need this? *****
-    this.anims.create({
-        key: 'fly',
-        frames: this.anims.generateFrameNames('chickfly', {
-            prefix: 'fly',
-            frames: [0, 1],
-            zeroPad: 1,
-        }),
-        repeat: 25
-    }, this);
-
     /**
      *  cheese
      */
@@ -162,7 +155,7 @@ function create() {
 
         // sur le rebord
         if (pointer.y > 700) {
-            let chz = this.add.sprite(pointer.x, pointer.y, 'fromage').setDepth(4);
+            let chz = this.add.image(pointer.x, pointer.y, 'fromage').setDepth(4);
             // use data first, then move chick
             chz.cx = pointer.x;
             chz.cy = pointer.y;
@@ -241,7 +234,8 @@ function update() {
     if (etat == 2.5) {
         // 150 loops, to etat 2
         if (this.chick.y < this.chick.cy) {
-            this.chick.play("fly", true);
+            wings = wings > 0 ? 0 : 1;
+            this.fly(wings);
             this.chick.y += 20;
         } else {
             etat = 3;
