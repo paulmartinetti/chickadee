@@ -1,4 +1,4 @@
-var config = {
+  var config = {
     type: Phaser.AUTO,
     width: 1200,
     height: 1200,
@@ -64,11 +64,6 @@ var rebordA = [
     { rx: 520, ry: 665, rs: 1 },
     { rx: 700, ry: 670, rs: -1 }
 ];
-// conf - initial vars
-var conf = {
-    insLen: 20,
-    hop: 180,
-};
 
 // trying a 2-part hop with less X on the first half
 var h2 = false;
@@ -94,9 +89,7 @@ var h2 = false;
 var mvmt1A = [{ f: 0, t: 3 }, { f: 4, t: 1 }, { f: 5, t: 1 }, { f: 0, t: 3 }];
 var mInd = 0;
 var mLen = mvmt1A.length;
-// direction
-var moveX = 0;
-var moveY = 0;
+var mPause = 20;
 
 // flying in
 var flyInA = [7, 8];
@@ -110,6 +103,18 @@ var flyP = 5;
 var chzA = [];
 var nextChz;
 
+// peck
+var peckA = [0, 1, 2, 3, 2, 6];
+var pLen = peckA.length;
+var peckInd = 0;
+var pecking = 0;
+var peckP = 3;
+
+// direction
+var moveX = 0;
+var moveY = 0;
+var hop = 180;
+
 function create() {
 
     /**
@@ -120,6 +125,10 @@ function create() {
 
     // background photo
     this.bg = this.add.image(0, 0, 'bg').setDepth(1).setOrigin(0, 0).setInteractive();
+
+     // audio - must be here in Scene create()
+     this.song = this.sound.add('song', {loop: true});
+     this.song.play();
 
     // instructions
     //let text = "Appuyez sur le rebord pour nourrir l'oiseau";
@@ -135,25 +144,44 @@ function create() {
     this.chick = this.add.sprite(-100, -100, 'chickAtlas').setDepth(5).setOrigin(1, 1);
 
     // to control texture (gestes) from atlas
-    this.psn = function (n) {
-        this.chick.setTexture('chickAtlas', 'chick' + n);
+    this.chick.psn = function (n) {
+        this.setTexture('chickAtlas', 'chick' + n);
     }
 
-    // audio - must be here in Scene create()
-    this.song = this.sound.add('song', {loop: true});
-    this.song.play();
+    // flying in and out
+    this.chick.fly = function(flyA) {
+        if (flying < flyP) {
+            // pause
+            flying++;
+        } else {
+            // flap
+            flyInd = flyInd > 0 ? 0 : 1;
+            this.psn(flyA[flyInd]);
+            flying = 0;
+        }
+    }
 
-    // eating - removed 2 frames 
-    this.anims.create({
-        key: 'eat',
-        frames: this.anims.generateFrameNames('chickAtlas', {
-            prefix: 'chick',
-            frames: [0, 1, 2, 3, 2, 6],
-            zeroPad: 1,
-        }),
-        repeat: 0
-    }, this);
-    //this.chick.play('eat', true);
+    // peck - pick up cheese
+    this.chick.peck = function(){
+        if (pecking < peckP){
+            // wait
+            pecking++;
+        } else {
+            // progress through pecking array
+            if (peckInd < pLen) {
+                this.psn(peckA[peckInd]);
+                // cheese disappears
+                if (peckInd == 3) nextChz.x = -100;
+                peckInd++;
+            } else {
+                // have cheese
+                nextChz.eaten = true;
+                // next etat
+                etat++;
+            }
+
+        }
+    }
 
     /**
      *  cheese
@@ -226,16 +254,6 @@ function update() {
         //this.om = this.add.sprite(this.chick.cx - (this.chick.displayWidth / 2), this.chick.cy, 'ombre').setDepth(2);
         //this.om.setScale(3);
 
-        // eating sound during animation
-        /* this.chick.on('animationupdate-eat', function () {
-            this.peck.play();
-        }, this);
-
-        // done eating
-        this.chick.on('animationcomplete-eat', function () {
-            etat = 4;
-        }, this); */
-
         // ready to gest
         etat = 2.5;
     }
@@ -252,18 +270,12 @@ function update() {
         // 
         if (this.chick.y < this.chick.cy) {
             // flapping
-            if (flying < conf.flyP) {
-                // pause
-                flying++;
-            } else {
-                // flap
-                flyInd = flyInd > 0 ? 0 : 1;
-                this.psn(flyInA[flyInd]);
-                flying = 0;
-            }
+            this.chick.fly(flyInA);
             // smooth in
             this.chick.y += 30;
         } else {
+            // stop flying
+        this.chick.psn(0);
             etat = 3;
         }
     }
@@ -276,9 +288,6 @@ function update() {
      */
     if (etat == 3) {
 
-        // stop flying
-        this.psn(0);
-
         // if still movements left to do
         if (mInd < mLen) {
 
@@ -286,11 +295,11 @@ function update() {
             let move = mvmt1A[mInd];
             // set
 
-            this.psn(move.f);
+            this.chick.psn(move.f);
             //console.log(this.chick.frame.name);
 
             // check time of movement
-            if (inst < move.t * conf.insLen) {
+            if (inst < move.t * mPause) {
                 inst++;
 
             } else {
@@ -334,9 +343,9 @@ function update() {
             // look left
             this.chick.scaleX = -1;
             // distance more than a hop 
-            if (Math.abs(this.chick.dx) > conf.hop) {
+            if (Math.abs(this.chick.dx) > hop) {
                 // how much to move
-                moveX = -1 * conf.hop;
+                moveX = -1 * hop;
             } else {
                 moveX = -1 * Math.abs(this.chick.dx);
             }
@@ -346,9 +355,9 @@ function update() {
             // move right
             // look right
             this.chick.scaleX = 1;
-            if (this.chick.dx > conf.hop) {
+            if (this.chick.dx > hop) {
                 // how much to move
-                moveX = conf.hop;
+                moveX = hop;
             } else {
                 moveX = this.chick.dx;
             }
@@ -358,9 +367,9 @@ function update() {
         // move Y - going up (rare)
         if (this.chick.dy < 0) {
             // distance more than a hop 
-            if (Math.abs(this.chick.dy) > conf.hop) {
+            if (Math.abs(this.chick.dy) > hop) {
                 // how much to move
-                moveY = -1 * conf.hop;
+                moveY = -1 * hop;
             } else {
                 moveY = -1 * this.chick.dy;
             }
@@ -368,9 +377,9 @@ function update() {
             if (this.chick.cy < nextChz.cy) moveY = 0;
         } else {
             // move right
-            if (this.chick.dy > conf.hop) {
+            if (this.chick.dy > hop) {
                 // how much to move
-                moveY = conf.hop;
+                moveY = hop;
             } else {
                 moveY = this.chick.dy;
             }
@@ -394,7 +403,7 @@ function update() {
             xhalf = 0.75;
             h2 = true;
             // dip head forward when hopping
-            this.psn(1);
+            this.chick.psn(1);
         } else {
             xhalf = 0.25;
             h2 = false;
@@ -418,16 +427,13 @@ function update() {
     // pause before moving again, back to etat = 5
     if (etat == 7) {
         // stand back up
-        this.psn(0);
+        this.chick.psn(0);
         // 150 loops, to etat 5
         pausNxt(70, 5);
     }
     // peck
     if (etat == 8) {
-        this.chick.play('eat', true);
-        nextChz.eaten = true;
-        nextChz.x = -100;
-        etat = 9;
+        this.chick.peck();
     }
 }
 
