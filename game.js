@@ -48,6 +48,7 @@ var rebordA = [
 var conf = {
     insLen: 20,
     hop: 180,
+    flyP: 5
 };
 
 // trying a 2-part hop with less X on the first half
@@ -57,21 +58,31 @@ var h2 = false;
  * Head movement data pairs
  * {atlas frame, multiples of insLen}
  * pref 'chick'
- * 0, 6 - stand
- * 1, 5 - bend
+ * 0 - stand
+ * 1, 2 - bend
  * 3 - peck
- * 7 - look left
- * 8 - look right
+ * 4 - look away
+ * 5 - look at
+ * 6 - cheese in beak
+ * 7 - face wing up
+ * 8 - face wing down
+ * 9 - back wing up
+ * 10 - back wing up
+ * 
  */
 
-var mvmt1A = [{ f: 0, t: 3 }, { f: 7, t: 1 }, { f: 8, t: 1 }, { f: 0, t: 3 }];
+// gestes
+var mvmt1A = [{ f: 0, t: 3 }, { f: 4, t: 1 }, { f: 5, t: 1 }, { f: 0, t: 3 }];
 var mInd = 0;
 var mLen = mvmt1A.length;
 // direction
 var moveX = 0;
 var moveY = 0;
-// wings
-var wings = 0;
+
+// flying in
+var flyInA = [7, 8];
+var flyInd = 0;
+var flying = 0;
 
 // cheeses
 var chzA = [];
@@ -87,7 +98,6 @@ function preload() {
 
     // chick
     this.load.atlas('chickAtlas', 'assets/images/spritesheet.png', 'assets/images/sprites.json');
-    this.load.atlas('chickfly', 'assets/images/chickfly.png', 'assets/images/chickfly.json');
     this.load.image('ombre', 'assets/images/ombre.png');
     //console.log(this.textures.get('chickAtlas').frames);
 
@@ -127,9 +137,6 @@ function create() {
     this.psn = function (n) {
         this.chick.setTexture('chickAtlas', 'chick' + n);
     }
-    this.fly = function (n) {
-        this.chick.setTexture('chickfly', 'fly' + n);
-    }
 
     // audio - must be here in Scene create()
     //this.peck = this.sound.add('peck');
@@ -139,7 +146,7 @@ function create() {
         key: 'eat',
         frames: this.anims.generateFrameNames('chickAtlas', {
             prefix: 'chick',
-            frames: [0, 1, 3, 5, 6],
+            frames: [0, 1, 2, 3, 2, 0],
             zeroPad: 1,
         }),
         repeat: 0
@@ -207,6 +214,7 @@ function update() {
         // chick Sprite defined in Create()
         // store and update x, y data before moving
         this.chick.cx = this.chick.x = rebordA[ind].rx;
+        // actual y value assigned later
         this.chick.cy = rebordA[ind].ry;
 
         // facing right or left
@@ -229,14 +237,30 @@ function update() {
         // ready to gest
         etat = 2.5;
     }
-
-    // fly in
+    
+    /**
+     * 
+     * flying in
+     * flyInA = [7, 8];
+     * flyInd = 0;
+     * flying = 0;
+     * 
+     */
     if (etat == 2.5) {
-        // 150 loops, to etat 2
+        // 
         if (this.chick.y < this.chick.cy) {
-            wings = wings > 0 ? 0 : 1;
-            this.fly(wings);
-            this.chick.y += 20;
+            // flapping
+            if (flying < conf.flyP) {
+                // pause
+                flying++;
+            } else {
+                // flap
+                flyInd = flyInd > 0 ? 0 : 1;
+                this.psn(flyInA[flyInd]);
+                flying = 0;
+            }
+            // smooth in
+            this.chick.y += 30;
         } else {
             etat = 3;
         }
