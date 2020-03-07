@@ -131,8 +131,8 @@ function create() {
     this.song.play();
 
     // instructions
-    //let text = "Appuyez sur le rebord pour nourrir l'oiseau";
-    //instr = this.add.text(150, 260, text).setDepth(2).setFont('36px Arial').setAlign('center').setColor('#000000');
+    let text = "Appuyez sur le rebord pour nourrir l'oiseau";
+    let instr = this.add.text(250, 860, text).setDepth(2).setFont('36px Arial').setAlign('center').setColor('#000000');
 
 
     /**
@@ -192,6 +192,8 @@ function create() {
 
     // put a cheese down
     this.bg.on('pointerdown', function (pointer, localX, localY) {
+
+        instr.x = 1200;
 
         // sur le rebord
         if (pointer.y > 700) {
@@ -335,7 +337,7 @@ function update() {
     // calculate one hop closer to cheese
     if (etat == 5) {
         // move X - going left
-        if (this.chick.dx <= 0) {
+        if (this.chick.dx < 0) {
             // look left
             this.chick.scaleX = -1;
             // distance more than a hop 
@@ -346,22 +348,31 @@ function update() {
                 moveX = -1 * Math.abs(this.chick.dx);
             }
             // adjust if arrived
-            if (this.chick.cx < nextChz.cx) moveX = 0;
-        } else {
+            if (this.chick.cx <= nextChz.cx) moveX = 0;
+        } else if (this.chick.dx > 0) {
             // move right
             // look right
             this.chick.scaleX = 1;
-            if (this.chick.dx > hop) {
+            if (this.chick.dx >= hop) {
                 // how much to move
                 moveX = hop;
             } else {
                 moveX = this.chick.dx;
             }
             // adjust if arrived
-            if (this.chick.cx > nextChz.cx) moveX = 0;
+            if (this.chick.cx >= nextChz.cx) moveX = 0;
+        } else {
+            if (this.chick.dx >= hop) {
+                // how much to move
+                moveX = hop;
+            } else {
+                moveX = this.chick.dx;
+            }
+            // adjust if arrived
+            if (this.chick.cx >= nextChz.cx) moveX = 0;
         }
         // move Y - going up (rare)
-        if (this.chick.dy < 0) {
+        if (this.chick.dy <= 0) {
             // distance more than a hop 
             if (Math.abs(this.chick.dy) > hop) {
                 // how much to move
