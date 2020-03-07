@@ -18,7 +18,8 @@ var game = new Phaser.Game(config);
 function preload() {
 
     // background photo
-    this.load.image('bg', 'assets/images/rebord-c.jpg');
+    this.load.image('jardin', 'assets/images/jardin.jpg');
+    this.load.image('rebord', 'assets/images/rebord-c.png');
 
     // chick
     this.load.atlas('chickAtlas', 'assets/images/spritesheet.png', 'assets/images/sprites.json');
@@ -118,13 +119,15 @@ var hop = 180;
 function create() {
 
     /**
-    * Depths - background = 1
+    * Depths - jardin = 1
+    *          rebord = 5
     *          cheese = 7
-    *          chick = 5
+    *          chick = 3, 6
     */
 
     // background photo
-    this.bg = this.add.image(0, 0, 'bg').setDepth(1).setOrigin(0, 0).setInteractive();
+    this.jardin = this.add.image(0, 0, 'jardin').setDepth(1).setOrigin(0, 0);
+    this.rebord = this.add.image(0, 0, 'rebord').setDepth(5).setOrigin(0, 0).setInteractive();
 
     // audio - must be here in Scene create()
     this.song = this.sound.add('song', { loop: true });
@@ -137,11 +140,11 @@ function create() {
 
     /**
      * 
-     * chick - created, no seen; origin is bottom center, depth of 5
+     * chick - created, no seen; origin is bottom center, depth of 3
      * remade sprite P
      * 
      */
-    this.chick = this.add.sprite(-100, -100, 'chickAtlas').setDepth(5).setOrigin(1, 1);
+    this.chick = this.add.sprite(-100, -100, 'chickAtlas').setDepth(3).setOrigin(1, 1);
 
     // to control which face to use from atlas
     this.chick.face = function (n) {
@@ -191,13 +194,13 @@ function create() {
      */
 
     // put a cheese down
-    this.bg.on('pointerdown', function (pointer, localX, localY) {
+    this.rebord.on('pointerdown', function (pointer, localX, localY) {
 
         instr.x = 1200;
 
         // sur le rebord
         if (pointer.y > 700) {
-            let chz = this.add.image(pointer.x, pointer.y, 'fromage').setDepth(4);
+            let chz = this.add.image(pointer.x, pointer.y, 'fromage').setDepth(7);
             // use data first, then move chick
             chz.cx = pointer.x;
             chz.cy = pointer.y;
@@ -331,6 +334,8 @@ function update() {
         // capture distance and direction to cheese
         this.chick.dx = nextChz.cx - this.chick.cx;
         this.chick.dy = nextChz.cy - this.chick.cy;
+        // sur rebord
+        this.chick.setDepth(6);
         etat = 5;
     }
 
@@ -451,6 +456,7 @@ function update() {
     // turn and go
     if (etat == 10) {
         this.chick.face(4);
+        this.chick.setDepth(3);
         let ind = rnd() > 0.5 ? 1 : 0;
         // chick Sprite defined in Create()
         // store and update x, y data before moving
