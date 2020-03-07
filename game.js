@@ -1,4 +1,4 @@
-  var config = {
+var config = {
     type: Phaser.AUTO,
     width: 1200,
     height: 1200,
@@ -39,7 +39,7 @@ function preload() {
  */
 
 
-// waiting for cheese
+// state control var
 var etat = 0;
 
 // random function
@@ -126,9 +126,9 @@ function create() {
     // background photo
     this.bg = this.add.image(0, 0, 'bg').setDepth(1).setOrigin(0, 0).setInteractive();
 
-     // audio - must be here in Scene create()
-     this.song = this.sound.add('song', {loop: true});
-     this.song.play();
+    // audio - must be here in Scene create()
+    this.song = this.sound.add('song', { loop: true });
+    this.song.play();
 
     // instructions
     //let text = "Appuyez sur le rebord pour nourrir l'oiseau";
@@ -143,33 +143,33 @@ function create() {
      */
     this.chick = this.add.sprite(-100, -100, 'chickAtlas').setDepth(5).setOrigin(1, 1);
 
-    // to control texture (gestes) from atlas
-    this.chick.psn = function (n) {
+    // to control which face to use from atlas
+    this.chick.face = function (n) {
         this.setTexture('chickAtlas', 'chick' + n);
     }
 
     // flying in and out
-    this.chick.fly = function(flyA) {
+    this.chick.fly = function (flyA) {
         if (flying < flyP) {
             // pause
             flying++;
         } else {
             // flap
             flyInd = flyInd > 0 ? 0 : 1;
-            this.psn(flyA[flyInd]);
+            this.face(flyA[flyInd]);
             flying = 0;
         }
     }
 
     // peck - pick up cheese
-    this.chick.peck = function(){
-        if (pecking < peckP){
+    this.chick.peck = function () {
+        if (pecking < peckP) {
             // wait
             pecking++;
         } else {
             // progress through pecking array
             if (peckInd < pLen) {
-                this.psn(peckA[peckInd]);
+                this.face(peckA[peckInd]);
                 // cheese disappears
                 if (peckInd == 3) nextChz.x = -100;
                 peckInd++;
@@ -177,7 +177,7 @@ function create() {
                 // have cheese
                 nextChz.eaten = true;
                 // next etat
-                etat++;
+                etat = 9;
             }
 
         }
@@ -257,7 +257,7 @@ function update() {
         // ready to gest
         etat = 2.5;
     }
-    
+
     /**
      * 
      * flying in
@@ -275,7 +275,7 @@ function update() {
             this.chick.y += 30;
         } else {
             // stop flying
-        this.chick.psn(0);
+            this.chick.face(0);
             etat = 3;
         }
     }
@@ -295,7 +295,7 @@ function update() {
             let move = mvmt1A[mInd];
             // set
 
-            this.chick.psn(move.f);
+            this.chick.face(move.f);
             //console.log(this.chick.frame.name);
 
             // check time of movement
@@ -339,7 +339,7 @@ function update() {
     // calculate one hop closer to cheese
     if (etat == 5) {
         // move X - going left
-        if (this.chick.dx < 0) {
+        if (this.chick.dx <= 0) {
             // look left
             this.chick.scaleX = -1;
             // distance more than a hop 
@@ -403,7 +403,7 @@ function update() {
             xhalf = 0.75;
             h2 = true;
             // dip head forward when hopping
-            this.chick.psn(1);
+            this.chick.face(1);
         } else {
             xhalf = 0.25;
             h2 = false;
@@ -412,7 +412,7 @@ function update() {
         // data x, y
         this.chick.cx += (moveX * xhalf);
         // distance from cheese
-        this.chick.dx -= Math.abs(moveX * xhalf);
+        this.chick.dx -= moveX * xhalf;
         // actual chick
         this.chick.x = this.chick.cx;
 
@@ -424,17 +424,50 @@ function update() {
         //this.om.y += moveY; 
         if (!h2) etat = 7;
     }
-    // pause before moving again, back to etat = 5
+    // pause before hopping again, back to etat = 5
     if (etat == 7) {
         // stand back up
-        this.chick.psn(0);
+        this.chick.face(0);
         // 150 loops, to etat 5
         pausNxt(70, 5);
     }
     // peck
     if (etat == 8) {
+        // advances to next etat at end
         this.chick.peck();
     }
+    // look at viewer
+    if (etat == 9) {
+        // 150 loops, to etat 5
+        pausNxt(70, 10);
+    }
+    // turn and go
+    if (etat == 10) {
+        this.chick.face(4);
+        let ind = rnd() > 0.5 ? 1 : 0;
+        // chick Sprite defined in Create()
+        // store and update x, y data before moving
+        this.chick.cx = this.chick.x = rebordA[ind].rx;
+        // actual y value assigned later
+        this.chick.cy = this.chick.y = rebordA[ind].ry;
+        etat = 11;
+    }
+    if (etat == 11) {
+        pausNxt(30, 12);
+    }
+    if (etat == 12) {
+        if (this.chick.y > 0) {
+            // flapping
+            this.chick.fly(flyOutA);
+            // smooth out
+            this.chick.y -= 50;
+        } else {
+            // stop flying
+            this.chick.face(0);
+            etat = 13;
+        }
+    }
+
 }
 
 
