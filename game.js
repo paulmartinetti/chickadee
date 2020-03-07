@@ -176,6 +176,9 @@ function create() {
             } else {
                 // have cheese
                 nextChz.eaten = true;
+                // reset
+                pecking = 0;
+                peckInd = 0;
                 // next etat
                 etat = 9;
             }
@@ -222,10 +225,16 @@ function update() {
 
     // wait for cheese
     if (etat == 0) {
+        // 
         if (chzA.length > 0) {
-            etat = 1;
-        } else {
-            return;
+            // if not eaten, pick first available cheese
+            chzA.forEach(chz => {
+                if (!chz.eaten) {
+                    // there is cheese
+                    nextChz = chz;
+                    etat = 1;
+                }
+            });
         }
     }
 
@@ -317,23 +326,10 @@ function update() {
     }
     // choose a cheese
     if (etat == 4) {
-        // look for closest bread
-        let yena = false;
-        // if not eaten, pick first available cheese
-        chzA.forEach(chz => {
-            if (!chz.eaten) {
-                // there is cheese
-                yena = true;
-                // capture distance and direction to cheese
-                this.chick.dx = chz.cx - this.chick.cx;
-                this.chick.dy = chz.cy - this.chick.cy;
-                // includes direction
-                // for chick mvmnt and collision detection
-                nextChz = chz;
-            }
-        });
-        // there is cheese, go get it
-        if (yena) etat = 5;
+        // capture distance and direction to cheese
+        this.chick.dx = nextChz.cx - this.chick.cx;
+        this.chick.dy = nextChz.cy - this.chick.cy;
+        etat = 5;
     }
 
     // calculate one hop closer to cheese
@@ -464,7 +460,7 @@ function update() {
         } else {
             // stop flying
             this.chick.face(0);
-            etat = 13;
+            etat = 0;
         }
     }
 
