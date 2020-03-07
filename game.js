@@ -12,6 +12,26 @@ var config = {
     backgroundColor: '555555'
 };
 
+// create game
+var game = new Phaser.Game(config);
+
+function preload() {
+
+    // background photo
+    this.load.image('bg', 'assets/images/rebord-c.jpg');
+
+    // chick
+    this.load.atlas('chickAtlas', 'assets/images/spritesheet.png', 'assets/images/sprites.json');
+    this.load.image('ombre', 'assets/images/ombre.png');
+    //console.log(this.textures.get('chickAtlas').frames);
+
+    // cheese
+    this.load.image('fromage', 'assets/images/fromage.png');
+
+    // audio
+    this.load.audio('song', 'assets/audio/Sunny Day-SoundBible-com-2064222612.mp3');
+
+}
 /**
  * 
  * global vars
@@ -48,7 +68,6 @@ var rebordA = [
 var conf = {
     insLen: 20,
     hop: 180,
-    flyP: 5
 };
 
 // trying a 2-part hop with less X on the first half
@@ -81,33 +100,15 @@ var moveY = 0;
 
 // flying in
 var flyInA = [7, 8];
+var flyOutA = [9, 10];
 var flyInd = 0;
 var flying = 0;
+// num of update loops before changing textures
+var flyP = 5;
 
 // cheeses
 var chzA = [];
 var nextChz;
-
-// create game
-var game = new Phaser.Game(config);
-
-function preload() {
-
-    // background photo
-    this.load.image('bg', 'assets/images/rebord-c.jpg');
-
-    // chick
-    this.load.atlas('chickAtlas', 'assets/images/spritesheet.png', 'assets/images/sprites.json');
-    this.load.image('ombre', 'assets/images/ombre.png');
-    //console.log(this.textures.get('chickAtlas').frames);
-
-    // cheese
-    this.load.image('fromage', 'assets/images/fromage.png');
-
-    // audio
-    this.load.audio('peck', 'assets/audio/Cafetiere.mp3');
-
-}
 
 function create() {
 
@@ -139,14 +140,15 @@ function create() {
     }
 
     // audio - must be here in Scene create()
-    //this.peck = this.sound.add('peck');
+    this.song = this.sound.add('song', {loop: true});
+    this.song.play();
 
     // eating - removed 2 frames 
     this.anims.create({
         key: 'eat',
         frames: this.anims.generateFrameNames('chickAtlas', {
             prefix: 'chick',
-            frames: [0, 1, 2, 3, 2, 0],
+            frames: [0, 1, 2, 3, 2, 6],
             zeroPad: 1,
         }),
         repeat: 0
@@ -423,6 +425,8 @@ function update() {
     // peck
     if (etat == 8) {
         this.chick.play('eat', true);
+        nextChz.eaten = true;
+        nextChz.x = -100;
         etat = 9;
     }
 }
