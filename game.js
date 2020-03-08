@@ -97,7 +97,6 @@ var mPause = 20;
 var flyInA = [7, 8];
 var flyOutA = [9, 10];
 var flyInd = 0;
-var flying = 0;
 // num of update loops before changing textures
 var flyP = 5;
 
@@ -109,13 +108,13 @@ var nextChz;
 var peckA = [0, 1, 2, 3, 2, 6];
 var pLen = peckA.length;
 var peckInd = 0;
-var pecking = 0;
 var peckP = 3;
 
 // direction
-var moveX = 0;
-var moveY = 0;
-var hop = 180;
+var hopA = [];
+var hopInd = 0;
+var hopP = 70;
+var hop = 100;
 
 function create() {
 
@@ -154,22 +153,22 @@ function create() {
 
     // flying in and out
     this.chick.fly = function (flyA) {
-        if (flying < flyP) {
+        if (inst < flyP) {
             // pause
-            flying++;
+            inst++;
         } else {
             // flap
             flyInd = flyInd > 0 ? 0 : 1;
             this.skin(flyA[flyInd]);
-            flying = 0;
+            inst = 0;
         }
     }
 
     // peck - pick up cheese
     this.chick.peck = function () {
-        if (pecking < peckP) {
+        if (inst < peckP) {
             // wait
-            pecking++;
+            inst++;
         } else {
             // progress through pecking array
             if (peckInd < pLen) {
@@ -181,12 +180,71 @@ function create() {
                 // have cheese
                 nextChz.eaten = true;
                 // reset
-                pecking = 0;
+                inst = 0;
                 peckInd = 0;
                 // next etat
                 etat = 9;
             }
 
+        }
+    }
+
+    this.chick.hop = function () {
+
+        
+        if (inst < hopP) {
+            inst++;
+        } else {
+            if (hopInd < hopA.length) {
+                let t = hopA[hopInd];
+                this.x += t.cx;
+                this.y += t.cy;
+                this.setDepth(this.y<671 ? 3 : 6);
+                hopInd++;
+            } else {
+                hopA = [];
+                hopInd = 0;
+                etat = 8;
+            }
+            inst = 0;
+        }
+
+    }
+
+    this.calcHops = function (deb, fin, hop) {
+
+        // delta
+        let dx = fin.x - deb.x;
+        let dy = fin.y - deb.y;
+
+        let far = dx < dy ? dy : dx;
+        let loop = Math.floor(far / hop);
+        let rmd = Math.round(far % hop);
+
+        for (let i = 0; i <= loop; i++) {
+            let mx = 0;
+            let my = 0;
+            let d;
+            // move until 0
+            d = Math.abs(dx);
+            if (dx < 0) {
+                mx = -1 * (d > hop ? hop : d);
+            } else if (dx > 0) {
+                mx = 1 * (d > hop ? hop : d);
+            }
+            d = Math.abs(dy);
+            if (dy < 0) {
+                my = -1 * (d > hop ? hop : d);
+            } else if (dy > 0) {
+                my = 1 * (d > hop ? hop : d);
+            }
+            // update d
+            dx -= mx;
+            dy -= my;
+            // 
+            let obj = { cx: mx, cy: my }
+            //console.log("dx: "+dx+" dy: "+dy);
+            hopA.push(obj);
         }
     }
 
@@ -255,16 +313,13 @@ function update() {
     if (etat == 2) {
 
         // add a chick in one of two spots
-        let ind = rnd() > 0.5 ? 1 : 0;
+        rebInd = rnd() > 0.5 ? 1 : 0;
 
-        // chick Sprite defined in Create()
-        // store and update x, y data before moving
-        this.chick.cx = this.chick.x = rebordA[ind].rx;
-        // actual y value assigned later
-        this.chick.cy = rebordA[ind].ry;
+        // move x
+        this.chick.x = rebordA[rebInd].rx
 
         // facing right or left
-        this.chick.scaleX = rebordA[ind].rs;
+        this.chick.scaleX = rebordA[rebInd].rs;
 
         // shadow underneath (half the display width of bird)
         //this.om = this.add.sprite(this.chick.cx - (this.chick.displayWidth / 2), this.chick.cy, 'ombre').setDepth(2);
@@ -284,7 +339,7 @@ function update() {
      */
     if (etat == 2.5) {
         // 
-        if (this.chick.y < this.chick.cy) {
+        if (this.chick.y < rebordA[rebInd].ry) {
             // flapping
             this.chick.fly(flyInA);
             // smooth in
@@ -334,69 +389,14 @@ function update() {
     // choose a cheese
     if (etat == 4) {
         // capture distance and direction to cheese
-        this.chick.dx = nextChz.cx - this.chick.cx;
-        this.chick.dy = nextChz.cy - this.chick.cy;
-        // sur rebord
-        this.chick.setDepth(6);
+        this.calcHops(this.chick, nextChz, hop);
         etat = 5;
     }
 
     // calculate one hop closer to cheese
     if (etat == 5) {
-        // move X - going left
-        if (this.chick.dx < 0) {
-            // look left
-            this.chick.scaleX = -1;
-            // distance more than a hop 
-            if (Math.abs(this.chick.dx) > hop) {
-                // how much to move
-                moveX = -1 * hop;
-            } else {
-                moveX = -1 * Math.abs(this.chick.dx);
-            }
-        } else if (this.chick.dx > 0) {
-            // move right
-            // look right
-            this.chick.scaleX = 1;
-            if (this.chick.dx >= hop) {
-                // how much to move
-                moveX = hop;
-            } else {
-                moveX = this.chick.dx;
-            }
-        } else {
-            if (this.chick.dx >= hop) {
-                // how much to move
-                moveX = hop;
-            } else {
-                moveX = this.chick.dx;
-            }
-        }
-        // move Y - going up (rare)
-        if (this.chick.dy <= 0) {
-            // distance more than a hop 
-            if (Math.abs(this.chick.dy) > hop) {
-                // how much to move
-                moveY = -1 * hop;
-            } else {
-                moveY = -1 * this.chick.dy;
-            }
-        } else {
-            // move right
-            if (this.chick.dy > hop) {
-                // how much to move
-                moveY = hop;
-            } else {
-                moveY = this.chick.dy;
-            }
-        }
 
-        // calc until arrived
-        if (Math.abs(moveY) > 0 || Math.abs(moveX) > 0) {
-            etat = 6;
-        } else {
-            etat = 8;
-        }
+        this.chick.hop();
 
     }
     if (etat == 6) {
@@ -413,16 +413,9 @@ function update() {
             h2 = false;
         }
         // update
-        // data x, y
-        this.chick.cx += (moveX * xhalf);
-        // distance from cheese
-        this.chick.dx -= moveX * xhalf;
         // actual chick
-        this.chick.x = this.chick.cx;
-
-        this.chick.cy += (moveY * 0.5);
-        this.chick.dy -= Math.abs(moveY * 0.5);
-        this.chick.y = this.chick.cy;
+        this.chick.x += (moveX * xhalf);
+        this.chick.y += (moveY * 0.5);
         // shadow
         // this.om.x += moveX;
         //this.om.y += moveY; 
