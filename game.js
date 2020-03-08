@@ -125,6 +125,7 @@ var hopP = 70;
 var hop = 180;
 // trying a 2-part hop with less X on the first half
 var h2 = false;
+// slight pause to see lean forward
 var duck = 0;
 var duckP = 3;
 
@@ -136,7 +137,6 @@ var calcHops = function (deb, fin, hop) {
 
     let far = dx < dy ? dy : dx;
     let loop = Math.floor(far / hop);
-    let rmd = Math.round(far % hop);
 
     for (let i = 0; i <= loop; i++) {
         let mx = 0;
@@ -245,7 +245,6 @@ function create() {
         } else {
             // hopping
             if (hopInd < hopA.length) {
-
                 // duck for a split sec
                 this.skin(1);
                 if (duck<duckP){
@@ -267,7 +266,7 @@ function create() {
                 if (!h2) {
                     xhalf = 0.75;
                     h2 = true;
-                    // dip head forward when hopping
+                    // random pausing during hop
                     inst = hopP / Math.round(5*rnd());
                 } else {
                     xhalf = 0.25;
