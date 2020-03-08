@@ -65,6 +65,7 @@ var rebordA = [
     { rx: 520, ry: 665, rs: 1 },
     { rx: 700, ry: 670, rs: -1 }
 ];
+var rebInd = 0;
 
 // trying a 2-part hop with less X on the first half
 var h2 = false;
@@ -135,7 +136,7 @@ function create() {
 
     // instructions
     let text = "Appuyez sur le rebord pour nourrir l'oiseau";
-    let instr = this.add.text(250, 860, text).setDepth(2).setFont('36px Arial').setAlign('center').setColor('#000000');
+    let instr = this.add.text(250, 860, text).setDepth(10).setFont('36px Arial').setAlign('center').setColor('#000000');
 
 
     /**
@@ -147,7 +148,7 @@ function create() {
     this.chick = this.add.sprite(-100, -100, 'chickAtlas').setDepth(3).setOrigin(1, 1);
 
     // to control which face to use from atlas
-    this.chick.face = function (n) {
+    this.chick.skin = function (n) {
         this.setTexture('chickAtlas', 'chick' + n);
     }
 
@@ -159,7 +160,7 @@ function create() {
         } else {
             // flap
             flyInd = flyInd > 0 ? 0 : 1;
-            this.face(flyA[flyInd]);
+            this.skin(flyA[flyInd]);
             flying = 0;
         }
     }
@@ -172,7 +173,7 @@ function create() {
         } else {
             // progress through pecking array
             if (peckInd < pLen) {
-                this.face(peckA[peckInd]);
+                this.skin(peckA[peckInd]);
                 // cheese disappears
                 if (peckInd == 3) nextChz.x = -100;
                 peckInd++;
@@ -196,6 +197,7 @@ function create() {
     // put a cheese down
     this.rebord.on('pointerdown', function (pointer, localX, localY) {
 
+        // remove instructions
         instr.x = 1200;
 
         // sur le rebord
@@ -289,7 +291,7 @@ function update() {
             this.chick.y += 30;
         } else {
             // stop flying
-            this.chick.face(0);
+            this.chick.skin(0);
             etat = 3;
         }
     }
@@ -309,7 +311,7 @@ function update() {
             let move = mvmt1A[mInd];
             // set
 
-            this.chick.face(move.f);
+            this.chick.skin(move.f);
             //console.log(this.chick.frame.name);
 
             // check time of movement
@@ -352,8 +354,6 @@ function update() {
             } else {
                 moveX = -1 * Math.abs(this.chick.dx);
             }
-            // adjust if arrived
-            if (this.chick.cx <= nextChz.cx) moveX = 0;
         } else if (this.chick.dx > 0) {
             // move right
             // look right
@@ -364,8 +364,6 @@ function update() {
             } else {
                 moveX = this.chick.dx;
             }
-            // adjust if arrived
-            if (this.chick.cx >= nextChz.cx) moveX = 0;
         } else {
             if (this.chick.dx >= hop) {
                 // how much to move
@@ -373,8 +371,6 @@ function update() {
             } else {
                 moveX = this.chick.dx;
             }
-            // adjust if arrived
-            if (this.chick.cx >= nextChz.cx) moveX = 0;
         }
         // move Y - going up (rare)
         if (this.chick.dy <= 0) {
@@ -385,8 +381,6 @@ function update() {
             } else {
                 moveY = -1 * this.chick.dy;
             }
-            // adjust if arrived
-            if (this.chick.cy < nextChz.cy) moveY = 0;
         } else {
             // move right
             if (this.chick.dy > hop) {
@@ -395,8 +389,6 @@ function update() {
             } else {
                 moveY = this.chick.dy;
             }
-            // adjust if arrived
-            if (this.chick.cy > nextChz.cy) moveY = 0;
         }
 
         // calc until arrived
@@ -415,7 +407,7 @@ function update() {
             xhalf = 0.75;
             h2 = true;
             // dip head forward when hopping
-            this.chick.face(1);
+            this.chick.skin(1);
         } else {
             xhalf = 0.25;
             h2 = false;
@@ -439,7 +431,7 @@ function update() {
     // pause before hopping again, back to etat = 5
     if (etat == 7) {
         // stand back up
-        this.chick.face(0);
+        this.chick.skin(0);
         // 150 loops, to etat 5
         pausNxt(70, 5);
     }
@@ -455,7 +447,7 @@ function update() {
     }
     // turn and go
     if (etat == 10) {
-        this.chick.face(4);
+        this.chick.skin(4);
         this.chick.setDepth(3);
         let ind = rnd() > 0.5 ? 1 : 0;
         // chick Sprite defined in Create()
@@ -476,7 +468,7 @@ function update() {
             this.chick.y -= 50;
         } else {
             // stop flying
-            this.chick.face(0);
+            this.chick.skin(0);
             etat = 0;
         }
     }
