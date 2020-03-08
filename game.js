@@ -17,6 +17,12 @@ var game = new Phaser.Game(config);
 
 function preload() {
 
+    // loader
+    let pre = this.add.text(590, 20, "").setDepth(10).setFont('36px Arial').setAlign('center').setColor('#FFFFFF');
+    this.load.on('progress', function (value) {
+        pre.setText(Math.round(value * 100) + "%");
+    });
+
     // background photo
     this.load.image('jardin', 'assets/images/jardin.jpg');
     this.load.image('rebord', 'assets/images/rebord-c.png');
@@ -31,6 +37,11 @@ function preload() {
 
     // audio
     this.load.audio('song', 'assets/audio/Sunny Day-SoundBible-com-2064222612.mp3');
+
+    // remove on load
+    this.load.on('complete', function () {
+        pre.destroy();
+    });
 
 }
 /**
@@ -66,9 +77,6 @@ var rebordA = [
     { rx: 700, ry: 670, rs: -1 }
 ];
 var rebInd = 0;
-
-// trying a 2-part hop with less X on the first half
-var h2 = false;
 
 /**
  * Head movement data pairs
@@ -110,11 +118,49 @@ var pLen = peckA.length;
 var peckInd = 0;
 var peckP = 3;
 
-// direction
+// hopping
 var hopA = [];
 var hopInd = 0;
 var hopP = 70;
-var hop = 100;
+var hop = 180;
+// trying a 2-part hop with less X on the first half
+var h2 = false;
+
+var calcHops = function (deb, fin, hop) {
+
+    // delta
+    let dx = fin.x - deb.x;
+    let dy = fin.y - deb.y;
+
+    let far = dx < dy ? dy : dx;
+    let loop = Math.floor(far / hop);
+    let rmd = Math.round(far % hop);
+
+    for (let i = 0; i <= loop; i++) {
+        let mx = 0;
+        let my = 0;
+        let d;
+        // move until 0
+        d = Math.abs(dx);
+        if (dx < 0) {
+            mx = -1 * (d > hop ? hop : d);
+        } else if (dx > 0) {
+            mx = 1 * (d > hop ? hop : d);
+        }
+        d = Math.abs(dy);
+        if (dy < 0) {
+            my = -1 * (d > hop ? hop : d);
+        } else if (dy > 0) {
+            my = 1 * (d > hop ? hop : d);
+        }
+        // update d
+        dx -= mx;
+        dy -= my;
+        // 
+        let obj = { cx: mx, cy: my }
+        hopA.push(obj);
+    }
+}
 
 function create() {
 
@@ -135,7 +181,7 @@ function create() {
 
     // instructions
     let text = "Appuyez sur le rebord pour nourrir l'oiseau";
-    let instr = this.add.text(250, 860, text).setDepth(10).setFont('36px Arial').setAlign('center').setColor('#000000');
+    this.instr = this.add.text(250, 860, text).setDepth(10).setFont('36px Arial').setAlign('center').setColor('#000000');
 
 
     /**
@@ -190,62 +236,48 @@ function create() {
     }
 
     this.chick.hop = function () {
-
-        
+        // uses global hopA filled by calc        
         if (inst < hopP) {
+            // wait
             inst++;
         } else {
+            // 
             if (hopInd < hopA.length) {
                 let t = hopA[hopInd];
-                this.x += t.cx;
-                this.y += t.cy;
-                this.setDepth(this.y<671 ? 3 : 6);
-                hopInd++;
+                // look left or right
+                if (t.cx > 0) {
+                    this.scaleX = 1;
+                } else if (t.cx < 0) {
+                    this.scaleX = -1;
+                }
+                // 
+                let xhalf;
+                // separate first and 2nd hop (note 70 / 30 does not work)
+                if (!h2) {
+                    xhalf = 0.75;
+                    h2 = true;
+                    // dip head forward when hopping
+                    this.skin(1);
+                    inst = hopP / Math.round(5*rnd());
+                } else {
+                    xhalf = 0.25;
+                    h2 = false;
+                    inst = 0;
+                    hopInd++;
+                }
+                // update
+                this.x += t.cx * xhalf;
+                this.y += t.cy * 0.5;
+                // sur le rebord
+                this.setDepth(this.y < 671 ? 3 : 6);
             } else {
                 hopA = [];
                 hopInd = 0;
                 etat = 8;
             }
-            inst = 0;
+            this.skin(0);
         }
 
-    }
-
-    this.calcHops = function (deb, fin, hop) {
-
-        // delta
-        let dx = fin.x - deb.x;
-        let dy = fin.y - deb.y;
-
-        let far = dx < dy ? dy : dx;
-        let loop = Math.floor(far / hop);
-        let rmd = Math.round(far % hop);
-
-        for (let i = 0; i <= loop; i++) {
-            let mx = 0;
-            let my = 0;
-            let d;
-            // move until 0
-            d = Math.abs(dx);
-            if (dx < 0) {
-                mx = -1 * (d > hop ? hop : d);
-            } else if (dx > 0) {
-                mx = 1 * (d > hop ? hop : d);
-            }
-            d = Math.abs(dy);
-            if (dy < 0) {
-                my = -1 * (d > hop ? hop : d);
-            } else if (dy > 0) {
-                my = 1 * (d > hop ? hop : d);
-            }
-            // update d
-            dx -= mx;
-            dy -= my;
-            // 
-            let obj = { cx: mx, cy: my }
-            //console.log("dx: "+dx+" dy: "+dy);
-            hopA.push(obj);
-        }
     }
 
     /**
@@ -256,14 +288,11 @@ function create() {
     this.rebord.on('pointerdown', function (pointer, localX, localY) {
 
         // remove instructions
-        instr.x = 1200;
+        this.instr.destroy();
 
         // sur le rebord
         if (pointer.y > 700) {
             let chz = this.add.image(pointer.x, pointer.y, 'fromage').setDepth(7);
-            // use data first, then move chick
-            chz.cx = pointer.x;
-            chz.cy = pointer.y;
             // eaten state
             chz.eaten = false;
             // add to array
@@ -318,7 +347,7 @@ function update() {
         // move x
         this.chick.x = rebordA[rebInd].rx
 
-        // facing right or left
+        // facing right or left landing sur rebord
         this.chick.scaleX = rebordA[rebInd].rs;
 
         // shadow underneath (half the display width of bird)
@@ -389,15 +418,13 @@ function update() {
     // choose a cheese
     if (etat == 4) {
         // capture distance and direction to cheese
-        this.calcHops(this.chick, nextChz, hop);
+        calcHops(this.chick, nextChz, hop);
         etat = 5;
     }
 
     // calculate one hop closer to cheese
     if (etat == 5) {
-
         this.chick.hop();
-
     }
     if (etat == 6) {
         // slow animation, do two-move hop, then pause, then eat
@@ -445,9 +472,9 @@ function update() {
         let ind = rnd() > 0.5 ? 1 : 0;
         // chick Sprite defined in Create()
         // store and update x, y data before moving
-        this.chick.cx = this.chick.x = rebordA[ind].rx;
+        this.chick.x = rebordA[ind].rx;
         // actual y value assigned later
-        this.chick.cy = this.chick.y = rebordA[ind].ry;
+        this.chick.y = rebordA[ind].ry;
         etat = 11;
     }
     if (etat == 11) {
