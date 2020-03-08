@@ -125,6 +125,8 @@ var hopP = 70;
 var hop = 180;
 // trying a 2-part hop with less X on the first half
 var h2 = false;
+var duck = 0;
+var duckP = 3;
 
 var calcHops = function (deb, fin, hop) {
 
@@ -241,8 +243,17 @@ function create() {
             // wait
             inst++;
         } else {
-            // 
+            // hopping
             if (hopInd < hopA.length) {
+
+                // duck for a split sec
+                this.skin(1);
+                if (duck<duckP){
+                    duck++;
+                    return;
+                } else {
+                    duck=0;
+                }
                 let t = hopA[hopInd];
                 // look left or right
                 if (t.cx > 0) {
@@ -252,30 +263,40 @@ function create() {
                 }
                 // 
                 let xhalf;
-                // separate first and 2nd hop (note 70 / 30 does not work)
+                // separate first and 2nd parts of hop (note 70 / 30 does not work)
                 if (!h2) {
                     xhalf = 0.75;
                     h2 = true;
                     // dip head forward when hopping
-                    this.skin(1);
                     inst = hopP / Math.round(5*rnd());
                 } else {
                     xhalf = 0.25;
                     h2 = false;
+                    // ready to end hop
                     inst = 0;
+                    // prep for next hop
                     hopInd++;
                 }
-                // update
-                this.x += t.cx * xhalf;
-                this.y += t.cy * 0.5;
                 // sur le rebord
                 this.setDepth(this.y < 671 ? 3 : 6);
+                // hop a little
+                this.x += t.cx * xhalf;
+                this.y += t.cy * 0.5;
+                // stand back up
+                this.skin(0);
+                if (duck<duckP){
+                    duck++;
+                    return;
+                } else {
+                    duck=0;
+                }
             } else {
+                // done hopping
                 hopA = [];
                 hopInd = 0;
+                // peck
                 etat = 8;
             }
-            this.skin(0);
         }
 
     }
@@ -421,39 +442,9 @@ function update() {
         calcHops(this.chick, nextChz, hop);
         etat = 5;
     }
-
-    // calculate one hop closer to cheese
+    // hop to cheese
     if (etat == 5) {
         this.chick.hop();
-    }
-    if (etat == 6) {
-        // slow animation, do two-move hop, then pause, then eat
-        let xhalf;
-        // separate first and 2nd hop (note 70 / 30 does not work)
-        if (!h2) {
-            xhalf = 0.75;
-            h2 = true;
-            // dip head forward when hopping
-            this.chick.skin(1);
-        } else {
-            xhalf = 0.25;
-            h2 = false;
-        }
-        // update
-        // actual chick
-        this.chick.x += (moveX * xhalf);
-        this.chick.y += (moveY * 0.5);
-        // shadow
-        // this.om.x += moveX;
-        //this.om.y += moveY; 
-        if (!h2) etat = 7;
-    }
-    // pause before hopping again, back to etat = 5
-    if (etat == 7) {
-        // stand back up
-        this.chick.skin(0);
-        // 150 loops, to etat 5
-        pausNxt(70, 5);
     }
     // peck
     if (etat == 8) {
