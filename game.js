@@ -101,7 +101,7 @@ var mInd = 0;
 var mLen = mvmt1A.length;
 var mPause = 20;
 
-// flying in
+// flying 
 var flyInA = [7, 8];
 var flyOutA = [9, 10];
 var flyInd = 0;
@@ -237,7 +237,7 @@ function create() {
         }
     }
 
-    this.chick.hop = function () {
+    this.chick.hop = function (duckA) {
         // uses global hopA filled by calc        
         if (inst < hopP) {
             // wait
@@ -246,7 +246,7 @@ function create() {
             // hopping
             if (hopInd < hopA.length) {
                 // duck for a split sec
-                this.skin(1);
+                this.skin(duckA[0]);
                 if (duck<duckP){
                     duck++;
                     return;
@@ -254,7 +254,7 @@ function create() {
                     duck=0;
                 }
                 let t = hopA[hopInd];
-                // look left or right
+                // look left or right (excludes t.cx == 0)
                 if (t.cx > 0) {
                     this.scaleX = 1;
                 } else if (t.cx < 0) {
@@ -277,12 +277,12 @@ function create() {
                     hopInd++;
                 }
                 // sur le rebord
-                this.setDepth(this.y < 671 ? 3 : 6);
+                this.setDepth(this.y < 675 ? 3 : 6);
                 // hop a little
                 this.x += t.cx * xhalf;
                 this.y += t.cy * 0.5;
                 // stand back up
-                this.skin(0);
+                this.skin(duckA[1]);
                 if (duck<duckP){
                     duck++;
                     return;
@@ -294,7 +294,7 @@ function create() {
                 hopA = [];
                 hopInd = 0;
                 // peck
-                etat = 8;
+                etat++;
             }
         }
 
@@ -383,7 +383,6 @@ function update() {
      * flying in
      * flyInA = [7, 8];
      * flyInd = 0;
-     * flying = 0;
      * 
      */
     if (etat == 2.5) {
@@ -443,10 +442,10 @@ function update() {
     }
     // hop to cheese
     if (etat == 5) {
-        this.chick.hop();
+        this.chick.hop([1,0]);
     }
     // peck
-    if (etat == 8) {
+    if (etat == 6) {
         // advances to next etat at end
         this.chick.peck();
     }
@@ -458,19 +457,21 @@ function update() {
     // turn and go
     if (etat == 10) {
         this.chick.skin(4);
-        this.chick.setDepth(3);
+        //this.chick.setDepth(3);
         let ind = rnd() > 0.5 ? 1 : 0;
-        // chick Sprite defined in Create()
-        // store and update x, y data before moving
-        this.chick.x = rebordA[ind].rx;
-        // actual y value assigned later
-        this.chick.y = rebordA[ind].ry;
+        let obj = {};
+        obj.x = rebordA[ind].rx;
+        obj.y = rebordA[ind].ry;
+        calcHops(this.chick, obj,hop*1.5);
         etat = 11;
     }
     if (etat == 11) {
-        pausNxt(30, 12);
+        pausNxt(30, 12.5);
     }
-    if (etat == 12) {
+    if (etat == 12.5){
+        this.chick.hop([4,4]);
+    }
+    if (etat == 13.5) {
         if (this.chick.y > 0) {
             // flapping
             this.chick.fly(flyOutA);
