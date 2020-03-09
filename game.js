@@ -135,7 +135,10 @@ var calcHops = function (deb, fin, hop) {
     let dx = fin.x - deb.x;
     let dy = fin.y - deb.y;
 
-    let far = Math.abs(dx) < Math.abs(dy) ? Math.abs(dy) : Math.abs(dx);
+    let ax = Math.abs(dx);
+    let ay = Math.abs(dy);
+
+    let far =  ax < ay ? ay : ax;
     let loop = Math.floor(far / hop);
 
     for (let i = 0; i <= loop; i++) {
@@ -162,7 +165,6 @@ var calcHops = function (deb, fin, hop) {
         let obj = { cx: mx, cy: my }
         hopA.push(obj);
     }
-    console.log(hopA.length);
 }
 
 function create() {
@@ -213,6 +215,35 @@ function create() {
         }
     }
 
+    this.chick.geste = function () {
+        // if still movements left to do
+        if (mInd < mLen) {
+
+            // capture cur movement
+            let move = mvmt1A[mInd];
+            // set
+
+            this.skin(move.f);
+            //console.log(this.chick.frame.name);
+
+            // check time of movement
+            if (inst < move.t * mPause) {
+                inst++;
+
+            } else {
+                // reset, move on
+                mInd++;
+                inst = 0;
+            }
+            // done w movements
+        } else {
+            // reset mvmt
+            mInd = 0;
+            // move on to eat
+            etat = 4;
+        }
+    }
+
     // peck - pick up cheese
     this.chick.peck = function () {
         if (inst < peckP) {
@@ -237,8 +268,8 @@ function create() {
 
         }
     }
-
-    this.chick.hop = function (duckA) {
+    // accepts private A of two skins while hopping
+    this.chick.hop = function (skinA) {
         // uses global hopA filled by calc        
         if (inst < hopP) {
             // wait
@@ -247,7 +278,7 @@ function create() {
             // hopping
             if (hopInd < hopA.length) {
                 // duck for a split sec
-                this.skin(duckA[0]);
+                this.skin(skinA[0]);
                 if (duck<duckP){
                     duck++;
                     return;
@@ -280,10 +311,10 @@ function create() {
                 // hop a little
                 this.x += t.cx * xhalf;
                 this.y += t.cy * 0.5;
-                // sur le rebord
-                this.setDepth(this.y < 675 ? 3 : 6);
+                // sur le rebord (greatest y is 670)
+                this.setDepth(this.y < 672 ? 3 : 6);
                 // stand back up
-                this.skin(duckA[1]);
+                this.skin(skinA[1]);
                 if (duck<duckP){
                     duck++;
                     return;
@@ -390,7 +421,7 @@ function update() {
      * 
      */
     if (etat == 2.5) {
-        // 
+        // 30px per cycle is arbitrary but looks good
         if (this.chick.y + 30 < rebordA[rebInd].ry) {
             // flapping
             this.chick.fly(flyInA);
@@ -410,33 +441,7 @@ function update() {
      * mLen = this.mvmt1.length;
      */
     if (etat == 3) {
-
-        // if still movements left to do
-        if (mInd < mLen) {
-
-            // capture cur movement
-            let move = mvmt1A[mInd];
-            // set
-
-            this.chick.skin(move.f);
-            //console.log(this.chick.frame.name);
-
-            // check time of movement
-            if (inst < move.t * mPause) {
-                inst++;
-
-            } else {
-                // reset, move on
-                mInd++;
-                inst = 0;
-            }
-            // done w movements
-        } else {
-            // reset mvmt
-            mInd = 0;
-            // move on to eat
-            etat = 4;
-        }
+        this.chick.geste();
     }
     // choose a cheese
     if (etat == 4) {
