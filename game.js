@@ -131,11 +131,11 @@ var duckP = 3;
 
 var calcHops = function (deb, fin, hop) {
 
-    // delta
+    // delta, including direction
     let dx = fin.x - deb.x;
     let dy = fin.y - deb.y;
 
-    let far = dx < dy ? dy : dx;
+    let far = Math.abs(dx) < Math.abs(dy) ? Math.abs(dy) : Math.abs(dx);
     let loop = Math.floor(far / hop);
 
     for (let i = 0; i <= loop; i++) {
@@ -162,6 +162,7 @@ var calcHops = function (deb, fin, hop) {
         let obj = { cx: mx, cy: my }
         hopA.push(obj);
     }
+    console.log(hopA.length);
 }
 
 function create() {
@@ -276,11 +277,11 @@ function create() {
                     // prep for next hop
                     hopInd++;
                 }
-                // sur le rebord
-                this.setDepth(this.y < 675 ? 3 : 6);
                 // hop a little
                 this.x += t.cx * xhalf;
                 this.y += t.cy * 0.5;
+                // sur le rebord
+                this.setDepth(this.y < 675 ? 3 : 6);
                 // stand back up
                 this.skin(duckA[1]);
                 if (duck<duckP){
@@ -370,6 +371,9 @@ function update() {
         // facing right or left landing sur rebord
         this.chick.scaleX = rebordA[rebInd].rs;
 
+        // reset depth
+        this.chick.setDepth(3);
+
         // shadow underneath (half the display width of bird)
         //this.om = this.add.sprite(this.chick.cx - (this.chick.displayWidth / 2), this.chick.cy, 'ombre').setDepth(2);
         //this.om.setScale(3);
@@ -387,7 +391,7 @@ function update() {
      */
     if (etat == 2.5) {
         // 
-        if (this.chick.y < rebordA[rebInd].ry) {
+        if (this.chick.y + 30 < rebordA[rebInd].ry) {
             // flapping
             this.chick.fly(flyInA);
             // smooth in
@@ -462,7 +466,8 @@ function update() {
         let obj = {};
         obj.x = rebordA[ind].rx;
         obj.y = rebordA[ind].ry;
-        calcHops(this.chick, obj,hop*1.5);
+        // leaves more quickly than he came
+        calcHops(this.chick, obj,hop*2);
         etat = 11;
     }
     if (etat == 11) {
