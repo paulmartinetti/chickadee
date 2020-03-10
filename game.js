@@ -240,7 +240,7 @@ function create() {
             // reset mvmt
             mInd = 0;
             // move on to eat
-            etat = 4;
+            etat++;
         }
     }
 
@@ -263,7 +263,7 @@ function create() {
                 inst = 0;
                 peckInd = 0;
                 // next etat
-                etat = 9;
+                etat++;
             }
 
         }
@@ -410,7 +410,7 @@ function update() {
         //this.om.setScale(3);
 
         // ready to gest
-        etat = 2.5;
+        etat = 3;
     }
 
     /**
@@ -420,7 +420,7 @@ function update() {
      * flyInd = 0;
      * 
      */
-    if (etat == 2.5) {
+    if (etat == 3) {
         // 30px per cycle is arbitrary but looks good
         if (this.chick.y + 30 < rebordA[rebInd].ry) {
             // flapping
@@ -430,41 +430,36 @@ function update() {
         } else {
             // stop flying
             this.chick.skin(0);
-            etat = 3;
+            etat = 4;
         }
     }
 
     // natural gestes, not pursing food
-    /**
-     * mvmt1A = [{ f: 0, t: 3 }, { f: 7, t: 1 }, { f: 8, t: 1 }, { f: 0, t: 3 }];
-     * mInd = 0;
-     * mLen = this.mvmt1.length;
-     */
-    if (etat == 3) {
+    if (etat == 4) {
         this.chick.geste();
     }
     // choose a cheese
-    if (etat == 4) {
+    if (etat == 5) {
         // capture distance and direction to cheese
         calcHops(this.chick, nextChz, hop);
-        etat = 5;
+        etat = 6;
     }
     // hop to cheese
-    if (etat == 5) {
+    if (etat == 6) {
         this.chick.hop([1,0]);
     }
     // peck
-    if (etat == 6) {
+    if (etat == 7) {
         // advances to next etat at end
         this.chick.peck();
     }
     // look at viewer
-    if (etat == 9) {
+    if (etat == 8) {
         // 150 loops, to etat 5
-        pausNxt(70, 10);
+        pausNxt(70, 9);
     }
     // turn and go
-    if (etat == 10) {
+    if (etat == 9) {
         this.chick.skin(4);
         //this.chick.setDepth(3);
         let ind = rnd() > 0.5 ? 1 : 0;
@@ -473,15 +468,15 @@ function update() {
         obj.y = rebordA[ind].ry;
         // leaves more quickly than he came
         calcHops(this.chick, obj,hop*2);
-        etat = 11;
+        etat = 10;
     }
-    if (etat == 11) {
-        pausNxt(30, 12.5);
+    if (etat == 10) {
+        pausNxt(30, 11);
     }
-    if (etat == 12.5){
+    if (etat == 11){
         this.chick.hop([4,4]);
     }
-    if (etat == 13.5) {
+    if (etat == 12) {
         if (this.chick.y > 0) {
             // flapping
             this.chick.fly(flyOutA);
